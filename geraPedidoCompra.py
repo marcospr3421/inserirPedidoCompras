@@ -5,9 +5,9 @@ import pandas as pd
 from typing import List, Tuple
 import xml.etree.ElementTree as ET
 
-def setSentStatus() -> List[Tuple[str]]:
+def setSentStatus() -> List[Tuple[str, str, str, str, str, str, str, str, str, str, str, str, str, str, str, str]]:
     try:
-        workbook = pd.read_excel("C:/orders/Pasta1b.xlsx")
+        workbook = pd.read_excel("C:/orders/order.xlsx")
         rows = []
         for index, row in workbook.iterrows():
             numeroPedido = str(row.iloc[0])
@@ -37,44 +37,45 @@ rows = setSentStatus()
 results = []
 
 for row in rows:
-    numeroPedido = row
-    url = "http://ws.kplcloud.onclick.com.br/AbacosWswms.asmx"
+    numeroPedido, cnpjFornecedor, vendedor, valorFrete, valorImpostos, tipoPedido, tipoPrazoPagamento, prazosPagamento, codigoProduto, quantidade, precoBruto, descontoTotal,  aliquotaICMS, aliquotaIPI, previsaoEntrega, concluirPedido = row
+    
+    url = "http://ws.kplcloud.onclick.com.br/AbacosWSerp.asmx"
     headers = {'content-type': 'text/xml'}
     body = f"""<?xml version="1.0" encoding="utf-8"?>
     <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
         <soap:Body>
             <InserirPedidoCompra xmlns="http://www.kplsolucoes.com.br/ABACOSWebService">
                 <ChaveIdentificacao>E19C1DD8-345F-4F1B-A53F-CA4312CAF457</ChaveIdentificacao>
-                    <ListaDePedidosCompra>
-                        <PedidoCompra>
-                            <NumeroPedido>string</NumeroPedido>
-                            <CnpjFornecedor>string</CnpjFornecedor>
-                            <Vendedor>string</Vendedor>
-                            <ValorFrete>string</ValorFrete>
-                            <ValorImpostos>string</ValorImpostos>
-                            <TipoPedido>string</TipoPedido>
-                            <TipoPrazoPagamento>string</TipoPrazoPagamento>
-                            <PrazosPagamento>string</PrazosPagamento>
-                            <CodigoProduto>string</CodigoProduto>
-                            <Quantidade>string</Quantidade>
-                            <PrecoBruto>string</PrecoBruto>
-                            <DescontoTotal>string</DescontoTotal>
-                            <AliquotaICMS>string</AliquotaICMS>
-                            <AliquotaIPI>string</AliquotaIPI>
-                            <PrevisaoEntrega>string</PrevisaoEntrega>
-                            <ConcluirPedido>string</ConcluirPedido>
-                        </PedidoCompra>
-                    </ListaDePedidosCompra>
+                <ListaDePedidosCompra>
+                    <PedidoCompra>
+                        <NumeroPedido>{numeroPedido}</NumeroPedido>
+                        <CnpjFornecedor>{cnpjFornecedor}</CnpjFornecedor>
+                        <Vendedor>{vendedor}</Vendedor>
+                        <ValorFrete>{valorFrete}</ValorFrete>
+                        <ValorImpostos>{valorImpostos}</ValorImpostos>
+                        <TipoPedido>{tipoPedido}</TipoPedido>
+                        <TipoPrazoPagamento>{tipoPrazoPagamento}</TipoPrazoPagamento>
+                        <PrazosPagamento>{prazosPagamento}</PrazosPagamento>
+                        <CodigoProduto>{codigoProduto}</CodigoProduto>
+                        <Quantidade>{quantidade}</Quantidade>
+                        <PrecoBruto>{precoBruto}</PrecoBruto>
+                        <DescontoTotal>{descontoTotal}</DescontoTotal>
+                        <AliquotaICMS>{aliquotaICMS}</AliquotaICMS>
+                        <AliquotaIPI>{aliquotaIPI}</AliquotaIPI>
+                        <PrevisaoEntrega>{previsaoEntrega}</PrevisaoEntrega>
+                        <ConcluirPedido>{concluirPedido}</ConcluirPedido>
+                    </PedidoCompra>
+                </ListaDePedidosCompra>
             </InserirPedidoCompra>
         </soap:Body>
     </soap:Envelope>"""
 
-    def handle_soap_request(url: str, headers: dict, body: str) -> List[Tuple[str]]:
+    def handle_soap_request(url: str, headers: dict, body: str) -> List[Tuple[str, str, str, str, str, str, str, str, str, str, str, str, str, str, str, str]]:
         try:
             response = requests.post(url, data=body, headers=headers)
             response_content = response.content.decode('utf-8')
             response_content = ''.join(char for char in response_content if ord(char) < 255)
-            # print(response_content)
+            print(response_content)
 
             xml_io = StringIO(response_content)
             result = []
@@ -85,7 +86,7 @@ for row in rows:
                     values = tuple(
                         element.findtext(f".//{{http://www.kplsolucoes.com.br/ABACOSWebService}}{tag}")
                         for tag in [
-                            "NumeroDoPedido",
+                            "NumeroPedido",
                             "CnpjFornecedor",
                             "Vendedor",
                             "ValorFrete",
