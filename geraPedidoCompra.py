@@ -11,12 +11,24 @@ def setSentStatus() -> List[Tuple[str]]:
         rows = []
         for index, row in workbook.iterrows():
             numeroPedido = str(row.iloc[0])
+            cnpjFornecedor = str(row.iloc[1])
+            vendedor = str(row.iloc[2])
+            valorFrete = str(row.iloc[3])
+            valorImpostos = str(row.iloc[4])
+            tipoPedido = str(row.iloc[5])
+            tipoPrazoPagamento = str(row.iloc[6])
+            prazosPagamento = str(row.iloc[7])
+            codigoProduto = str(row.iloc[8])
+            quantidade = str(row.iloc[9])
+            precoBruto = str(row.iloc[10])
+            descontoTotal = str(row.iloc[11])
+            aliquotaICMS = str(row.iloc[12])
+            aliquotaIPI = str(row.iloc[13])
+            previsaoEntrega = str(row.iloc[14])
+            concluirPedido = str(row.iloc[15])
             
-            column1 = row.iloc[1]
-            column2 = row.iloc[2]
-            column3 = row.iloc[3]
             
-            rows.append((numeroPedido, column1, column2, column3))
+            rows.append((numeroPedido, cnpjFornecedor, vendedor, valorFrete, valorImpostos, tipoPedido, tipoPrazoPagamento, prazosPagamento, codigoProduto, quantidade, precoBruto, descontoTotal, aliquotaICMS, aliquotaIPI, previsaoEntrega, concluirPedido))
         return rows
     except Exception as e:
         logging.error("Error reading Excel file: %s", e)
@@ -69,11 +81,27 @@ for row in rows:
             values = []
 
             for event, element in ET.iterparse(xml_io, events=("start", "end")):
-                if event == "start" and element.tag == '{http://www.kplsolucoes.com.br/ABACOSWebService}MarcarPedidosDespachados':
+                if event == "start" and element.tag == '{http://www.kplsolucoes.com.br/ABACOSWebService}InserirPedidoCompra':
                     values = tuple(
                         element.findtext(f".//{{http://www.kplsolucoes.com.br/ABACOSWebService}}{tag}")
                         for tag in [
-                            "NumeroDoPedido"
+                            "NumeroDoPedido",
+                            "CnpjFornecedor",
+                            "Vendedor",
+                            "ValorFrete",
+                            "ValorImpostos",
+                            "TipoPedido",
+                            "TipoPrazoPagamento",
+                            "PrazosPagamento",
+                            "CodigoProduto",
+                            "Quantidade",
+                            "PrecoBruto",
+                            "DescontoTotal",
+                            "AliquotaICMS",
+                            "AliquotaIPI",
+                            "PrevisaoEntrega",
+                            "ConcluirPedido"
+                            
                         ]
                     )
                     # for event, element in ET.iterparse(xml_io, events=("start", "end")):
