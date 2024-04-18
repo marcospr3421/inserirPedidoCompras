@@ -3,7 +3,33 @@ import requests
 from io import StringIO
 import pandas as pd
 from typing import List, Tuple
+from collections import defaultdict
 import xml.etree.ElementTree as ET
+
+
+def gera_pedido_compra(pedidos: List[dict]) -> str:
+    pedidos_compra = ""
+    for pedido in pedidos:
+        pedidos_compra += f"""
+        <PedidoCompra>
+            <NumeroPedido>{pedido['numeroPedido']}</NumeroPedido>
+            <CnpjFornecedor>{pedido['cnpjFornecedor']}</CnpjFornecedor>
+            <Vendedor>{pedido['vendedor']}</Vendedor>
+            <ValorFrete>{pedido['valorFrete']}</ValorFrete>
+            <ValorImpostos>{pedido['valorImpostos']}</ValorImpostos>
+            <TipoPedido>{pedido['tipoPedido']}</TipoPedido>
+            <TipoPrazoPagamento>{pedido['tipoPrazoPagamento']}</TipoPrazoPagamento>
+            <PrazosPagamento>{pedido['prazosPagamento']}</PrazosPagamento>
+            <CodigoProduto>{pedido['codigoProduto']}</CodigoProduto>
+            <Quantidade>{pedido['quantidade']}</Quantidade>
+            <PrecoBruto>{pedido['precoBruto']}</PrecoBruto>
+            <DescontoTotal>{pedido['descontoTotal']}</DescontoTotal>
+            <AliquotaICMS>{pedido['aliquotaICMS']}</AliquotaICMS>
+            <AliquotaIPI>{pedido['aliquotaIPI']}</AliquotaIPI>
+            <PrevisaoEntrega>{pedido['previsaoEntrega']}</PrevisaoEntrega>
+            <ConcluirPedido>{pedido['concluirPedido']}</ConcluirPedido>
+        </PedidoCompra>"""
+    return pedidos_compra
 
 def setSentStatus() -> List[Tuple[str, str, str, str, str, str, str, str, str, str, str, str, str, str, str, str]]:
     try:
@@ -34,11 +60,36 @@ def setSentStatus() -> List[Tuple[str, str, str, str, str, str, str, str, str, s
         logging.error("Error reading Excel file: %s", e)
         return []
 rows = setSentStatus()
+# Group rows by numeroPedido
+grouped_rows = defaultdict(list)
+for row in rows:
+    grouped_rows[row[0]].append(row)
+    
 results = []
 
-for row in rows:
-    numeroPedido, cnpjFornecedor, vendedor, valorFrete, valorImpostos, tipoPedido, tipoPrazoPagamento, prazosPagamento, codigoProduto, quantidade, precoBruto, descontoTotal,  aliquotaICMS, aliquotaIPI, previsaoEntrega, concluirPedido = row
-    
+for numeroPedido, grouped_row in grouped_rows.items():
+    pedidos = []
+    for row in grouped_row:
+        numeroPedido, cnpjFornecedor, vendedor, valorFrete, valorImpostos, tipoPedido, tipoPrazoPagamento, prazosPagamento, codigoProduto, quantidade, precoBruto, descontoTotal,  aliquotaICMS, aliquotaIPI, previsaoEntrega, concluirPedido = row
+        pedidos.append({
+            'numeroPedido': numeroPedido,
+            'cnpjFornecedor': cnpjFornecedor,
+            'vendedor': vendedor,
+            'valorFrete': valorFrete,
+            'valorImpostos': valorImpostos,
+            'tipoPedido': tipoPedido,
+            'tipoPrazoPagamento': tipoPrazoPagamento,
+            'prazosPagamento': prazosPagamento,
+            'codigoProduto': codigoProduto,
+            'quantidade': quantidade,
+            'precoBruto': precoBruto,
+            'descontoTotal': descontoTotal,
+            'aliquotaICMS': aliquotaICMS,
+            'aliquotaIPI': aliquotaIPI,
+            'previsaoEntrega': previsaoEntrega,
+            'concluirPedido': concluirPedido
+        })
+
     url = "http://ws.kplcloud.onclick.com.br/AbacosWSerp.asmx"
     headers = {'content-type': 'text/xml'}
     body = f"""<?xml version="1.0" encoding="utf-8"?>
@@ -47,84 +98,67 @@ for row in rows:
             <InserirPedidoCompra xmlns="http://www.kplsolucoes.com.br/ABACOSWebService">
                 <ChaveIdentificacao>E19C1DD8-345F-4F1B-A53F-CA4312CAF457</ChaveIdentificacao>
                 <ListaDePedidosCompra>
-                    <PedidoCompra>
-                        <NumeroPedido>{numeroPedido}</NumeroPedido>
-                        <CnpjFornecedor>{cnpjFornecedor}</CnpjFornecedor>
-                        <Vendedor>{vendedor}</Vendedor>
-                        <ValorFrete>{valorFrete}</ValorFrete>
-                        <ValorImpostos>{valorImpostos}</ValorImpostos>
-                        <TipoPedido>{tipoPedido}</TipoPedido>
-                        <TipoPrazoPagamento>{tipoPrazoPagamento}</TipoPrazoPagamento>
-                        <PrazosPagamento>{prazosPagamento}</PrazosPagamento>
-                        <CodigoProduto>{codigoProduto}</CodigoProduto>
-                        <Quantidade>{quantidade}</Quantidade>
-                        <PrecoBruto>{precoBruto}</PrecoBruto>
-                        <DescontoTotal>{descontoTotal}</DescontoTotal>
-                        <AliquotaICMS>{aliquotaICMS}</AliquotaICMS>
-                        <AliquotaIPI>{aliquotaIPI}</AliquotaIPI>
-                        <PrevisaoEntrega>{previsaoEntrega}</PrevisaoEntrega>
-                        <ConcluirPedido>{concluirPedido}</ConcluirPedido>
-                    </PedidoCompra>
+                    {gera_pedido_compra(pedidos)}
                 </ListaDePedidosCompra>
             </InserirPedidoCompra>
         </soap:Body>
     </soap:Envelope>"""
 
-    def handle_soap_request(url: str, headers: dict, body: str) -> List[Tuple[str, str, str, str, str, str, str, str, str, str, str, str, str, str, str, str]]:
-        try:
-            response = requests.post(url, data=body, headers=headers)
-            response_content = response.content.decode('utf-8')
-            response_content = ''.join(char for char in response_content if ord(char) < 255)
-            print(response_content)
+def handle_soap_request(url: str, headers: dict, body: str) -> List[Tuple[str, str, str, str, str, str, str, str, str, str, str, str, str, str, str, str]]:
+    try:
+        response = requests.post(url, data=body, headers=headers)
+        response_content = response.content.decode('utf-8')
+        response_content = ''.join(char for char in response_content if ord(char) < 255)
+        print(response_content)
 
-            xml_io = StringIO(response_content)
-            result = []
-            values = []
+        xml_io = StringIO(response_content)
+        result = []
+        values = []
 
-            for event, element in ET.iterparse(xml_io, events=("start", "end")):
-                if event == "start" and element.tag == '{http://www.kplsolucoes.com.br/ABACOSWebService}InserirPedidoCompra':
-                    values = tuple(
-                        element.findtext(f".//{{http://www.kplsolucoes.com.br/ABACOSWebService}}{tag}")
-                        for tag in [
-                            "NumeroPedido",
-                            "CnpjFornecedor",
-                            "Vendedor",
-                            "ValorFrete",
-                            "ValorImpostos",
-                            "TipoPedido",
-                            "TipoPrazoPagamento",
-                            "PrazosPagamento",
-                            "CodigoProduto",
-                            "Quantidade",
-                            "PrecoBruto",
-                            "DescontoTotal",
-                            "AliquotaICMS",
-                            "AliquotaIPI",
-                            "PrevisaoEntrega",
-                            "ConcluirPedido"
-                            
-                        ]
-                    )
-                    # for event, element in ET.iterparse(xml_io, events=("start", "end")):
-                    #     if event == "start" and element.tag == '{http://www.kplsolucoes.com.br/ABACOSWebService}MarcarPedidosDespachadosResult':
-                    #         codigo = element.findtext(".//{http://www.kplsolucoes.com.br/ABACOSWebService}Codigo")
-                    #         descricao = element.findtext(".//{http://www.kplsolucoes.com.br/ABACOSWebService}Descricao")
-                    #         tipo = element.findtext(".//{http://www.kplsolucoes.com.br/ABACOSWebService}Tipo")
-                    #         exceptionMessage = element.findtext(".//{http://www.kplsolucoes.com.br/ABACOSWebService}ExceptionMessage")
-                    #         if codigo == "200001":
-                    #             print(codigo, descricao, tipo, exceptionMessage)
-                    #         else:
-                    #             logging.warning("Error processing row: %s", exceptionMessage)
-                            
-            if None not in values:
-                return result
-            result.append(values)
-            
-                    
-        except requests.exceptions.RequestException as e:
-            print(f"An error occurred: {e}")
+        for event, element in ET.iterparse(xml_io, events=("start", "end")):
+            if event == "start" and element.tag == '{http://www.kplsolucoes.com.br/ABACOSWebService}InserirPedidoCompra':
+                values = tuple(
+                    element.findtext(f".//{{http://www.kplsolucoes.com.br/ABACOSWebService}}{tag}")
+                    for tag in [
+                        "NumeroPedido",
+                        "CnpjFornecedor",
+                        "Vendedor",
+                        "ValorFrete",
+                        "ValorImpostos",
+                        "TipoPedido",
+                        "TipoPrazoPagamento",
+                        "PrazosPagamento",
+                        "CodigoProduto",
+                        "Quantidade",
+                        "PrecoBruto",
+                        "DescontoTotal",
+                        "AliquotaICMS",
+                        "AliquotaIPI",
+                        "PrevisaoEntrega",
+                        "ConcluirPedido"
+                        
+                    ]
+                )
+                # for event, element in ET.iterparse(xml_io, events=("start", "end")):
+                #     if event == "start" and element.tag == '{http://www.kplsolucoes.com.br/ABACOSWebService}MarcarPedidosDespachadosResult':
+                #         codigo = element.findtext(".//{http://www.kplsolucoes.com.br/ABACOSWebService}Codigo")
+                #         descricao = element.findtext(".//{http://www.kplsolucoes.com.br/ABACOSWebService}Descricao")
+                #         tipo = element.findtext(".//{http://www.kplsolucoes.com.br/ABACOSWebService}Tipo")
+                #         exceptionMessage = element.findtext(".//{http://www.kplsolucoes.com.br/ABACOSWebService}ExceptionMessage")
+                #         if codigo == "200001":
+                #             print(codigo, descricao, tipo, exceptionMessage)
+                #         else:
+                #             logging.warning("Error processing row: %s", exceptionMessage)
+                        
+        if None not in values:
+            return result
+        result.append(values)
         
-        return []  # Fix: Return an empty list if values contain None
+                
+    except requests.exceptions.RequestException as e:
+        print(f"An error occurred: {e}")
     
-    result = handle_soap_request(url, headers, body)
-    results.extend(result)
+    return []  # Fix: Return an empty list if values contain None
+
+result = handle_soap_request(url, headers, body)
+results.extend(result)
