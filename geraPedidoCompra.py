@@ -79,11 +79,12 @@ def handle_soap_request(url: str, headers: dict, body: str) -> List[Tuple[str, s
         response = requests.post(url, data=body, headers=headers)
         response_content = response.content.decode('utf-8')
         response_content = ''.join(char for char in response_content if ord(char) < 255)
-        print(response_content)
+        #print(response_content)
 
         xml_io = StringIO(response_content)
         result = []
         values = []
+        
 
         for event, element in ET.iterparse(xml_io, events=("start", "end")):
             if event == "start" and element.tag == '{http://www.kplsolucoes.com.br/ABACOSWebService}InserirPedidoCompra':
@@ -109,16 +110,7 @@ def handle_soap_request(url: str, headers: dict, body: str) -> List[Tuple[str, s
                         
                     ]
                 )
-                # for event, element in ET.iterparse(xml_io, events=("start", "end")):
-                #     if event == "start" and element.tag == '{http://www.kplsolucoes.com.br/ABACOSWebService}MarcarPedidosDespachadosResult':
-                #         codigo = element.findtext(".//{http://www.kplsolucoes.com.br/ABACOSWebService}Codigo")
-                #         descricao = element.findtext(".//{http://www.kplsolucoes.com.br/ABACOSWebService}Descricao")
-                #         tipo = element.findtext(".//{http://www.kplsolucoes.com.br/ABACOSWebService}Tipo")
-                #         exceptionMessage = element.findtext(".//{http://www.kplsolucoes.com.br/ABACOSWebService}ExceptionMessage")
-                #         if codigo == "200001":
-                #             print(codigo, descricao, tipo, exceptionMessage)
-                #         else:
-                #             logging.warning("Error processing row: %s", exceptionMessage)
+
                         
         if None not in values:
             return result
@@ -167,9 +159,21 @@ for numeroPedido, grouped_row in grouped_rows.items():
                 </ListaDePedidosCompra>
             </InserirPedidoCompra>
         </soap:Body>
-    </soap:Envelope>"""# print(pedidos)
+    </soap:Envelope>"""
+    # print(pedidos)
+    response = requests.post(url=url, headers=headers, data=body)
+    response_content = response.content.decode('utf-8')
+    xml_io = StringIO(response_content)
+    for event, element in ET.iterparse(xml_io, events=("start", "end")):
+        if event == "start" and element.tag == '{http://www.kplsolucoes.com.br/ABACOSWebService}InserirPedidoCompraResult':
     
+            codigo = element.findtext(".//{http://www.kplsolucoes.com.br/ABACOSWebService}Codigo")
+            descricao = element.findtext(".//{http://www.kplsolucoes.com.br/ABACOSWebService}Descricao")
+            tipo = element.findtext(".//{http://www.kplsolucoes.com.br/ABACOSWebService}Tipo")
+            exceptionMessage = element.findtext(".//{http://www.kplsolucoes.com.br/ABACOSWebService}ExceptionMessage")
+            # if codigo == "100001":
+            print(codigo, descricao, tipo, exceptionMessage)
     for pedido in pedidos:
         
         handle_soap_request(url, headers, body)
-
+        
