@@ -9,7 +9,9 @@ import xml.etree.ElementTree as ET
 
 def gera_pedido_compra(pedidos: List[dict]) -> str:
     pedidos_compra = ""
+    
     for pedido in pedidos:
+
         pedidos_compra += f"""
         <PedidoCompra>
             <NumeroPedido>{pedido['numeroPedido']}</NumeroPedido>
@@ -30,8 +32,9 @@ def gera_pedido_compra(pedidos: List[dict]) -> str:
             <ConcluirPedido>{pedido['concluirPedido']}</ConcluirPedido>
         </PedidoCompra>"""
     return pedidos_compra
+    
 
-def setSentStatus() -> List[Tuple[str, str, str, str, str, str, str, str, str, str, str, str, str, str, str, str]]:
+def setOrder() -> List[Tuple[str, str, str, str, str, str, str, str, str, str, str, str, str, str, str, str]]:
     try:
         workbook = pd.read_excel("C:/orders/order.xlsx")
         rows = []
@@ -59,7 +62,7 @@ def setSentStatus() -> List[Tuple[str, str, str, str, str, str, str, str, str, s
     except Exception as e:
         logging.error("Error reading Excel file: %s", e)
         return []
-rows = setSentStatus()
+rows = setOrder()
 # Group rows by numeroPedido
 grouped_rows = defaultdict(list)
 for row in rows:
@@ -67,42 +70,9 @@ for row in rows:
     
 results = []
 
-for numeroPedido, grouped_row in grouped_rows.items():
-    pedidos = []
-    for row in grouped_row:
-        numeroPedido, cnpjFornecedor, vendedor, valorFrete, valorImpostos, tipoPedido, tipoPrazoPagamento, prazosPagamento, codigoProduto, quantidade, precoBruto, descontoTotal,  aliquotaICMS, aliquotaIPI, previsaoEntrega, concluirPedido = row
-        pedidos.append({
-            'numeroPedido': numeroPedido,
-            'cnpjFornecedor': cnpjFornecedor,
-            'vendedor': vendedor,
-            'valorFrete': valorFrete,
-            'valorImpostos': valorImpostos,
-            'tipoPedido': tipoPedido,
-            'tipoPrazoPagamento': tipoPrazoPagamento,
-            'prazosPagamento': prazosPagamento,
-            'codigoProduto': codigoProduto,
-            'quantidade': quantidade,
-            'precoBruto': precoBruto,
-            'descontoTotal': descontoTotal,
-            'aliquotaICMS': aliquotaICMS,
-            'aliquotaIPI': aliquotaIPI,
-            'previsaoEntrega': previsaoEntrega,
-            'concluirPedido': concluirPedido
-        })
 
-    url = "http://ws.kplcloud.onclick.com.br/AbacosWSerp.asmx"
-    headers = {'content-type': 'text/xml'}
-    body = f"""<?xml version="1.0" encoding="utf-8"?>
-    <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
-        <soap:Body>
-            <InserirPedidoCompra xmlns="http://www.kplsolucoes.com.br/ABACOSWebService">
-                <ChaveIdentificacao>E19C1DD8-345F-4F1B-A53F-CA4312CAF457</ChaveIdentificacao>
-                <ListaDePedidosCompra>
-                    {gera_pedido_compra(pedidos)}
-                </ListaDePedidosCompra>
-            </InserirPedidoCompra>
-        </soap:Body>
-    </soap:Envelope>"""
+
+
 
 def handle_soap_request(url: str, headers: dict, body: str) -> List[Tuple[str, str, str, str, str, str, str, str, str, str, str, str, str, str, str, str]]:
     try:
@@ -160,5 +130,46 @@ def handle_soap_request(url: str, headers: dict, body: str) -> List[Tuple[str, s
     
     return []  # Fix: Return an empty list if values contain None
 
-result = handle_soap_request(url, headers, body)
-results.extend(result)
+for numeroPedido, grouped_row in grouped_rows.items():
+    pedidos = []
+    for row in grouped_row:
+        numeroPedido, cnpjFornecedor, vendedor, valorFrete, valorImpostos, tipoPedido, tipoPrazoPagamento, prazosPagamento, codigoProduto, quantidade, precoBruto, descontoTotal,  aliquotaICMS, aliquotaIPI, previsaoEntrega, concluirPedido = row
+        pedidos.append({
+            'numeroPedido': numeroPedido,
+            'cnpjFornecedor': cnpjFornecedor,
+            'vendedor': vendedor,
+            'valorFrete': valorFrete,
+            'valorImpostos': valorImpostos,
+            'tipoPedido': tipoPedido,
+            'tipoPrazoPagamento': tipoPrazoPagamento,
+            'prazosPagamento': prazosPagamento,
+            'codigoProduto': codigoProduto,
+            'quantidade': quantidade,
+            'precoBruto': precoBruto,
+            'descontoTotal': descontoTotal,
+            'aliquotaICMS': aliquotaICMS,
+            'aliquotaIPI': aliquotaIPI,
+            'previsaoEntrega': previsaoEntrega,
+            'concluirPedido': concluirPedido
+        })
+    
+    results.append(pedidos)
+    
+    url = "http://ws.kplcloud.onclick.com.br/AbacosWSerp.asmx"
+    headers = {'content-type': 'text/xml'}
+    body = f"""<?xml version="1.0" encoding="utf-8"?>
+    <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+        <soap:Body>
+            <InserirPedidoCompra xmlns="http://www.kplsolucoes.com.br/ABACOSWebService">
+                <ChaveIdentificacao>E19C1DD8-345F-4F1B-A53F-CA4312CAF457</ChaveIdentificacao>
+                <ListaDePedidosCompra>
+                    {gera_pedido_compra(pedidos)}
+                </ListaDePedidosCompra>
+            </InserirPedidoCompra>
+        </soap:Body>
+    </soap:Envelope>"""# print(pedidos)
+    
+    for pedido in pedidos:
+        
+        handle_soap_request(url, headers, body)
+
