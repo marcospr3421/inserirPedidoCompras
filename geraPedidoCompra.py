@@ -160,7 +160,7 @@ for numeroPedido, grouped_row in grouped_rows.items():
             </InserirPedidoCompra>
         </soap:Body>
     </soap:Envelope>"""
-    # print(pedidos)
+
     response = requests.post(url=url, headers=headers, data=body)
     response_content = response.content.decode('utf-8')
     xml_io = StringIO(response_content)
