@@ -4,6 +4,8 @@ from io import StringIO
 import pandas as pd
 from typing import List, Tuple
 from collections import defaultdict
+from tkinter import Tk
+from tkinter.filedialog import askopenfilename
 import xml.etree.ElementTree as ET
 
 
@@ -36,7 +38,12 @@ def gera_pedido_compra(pedidos: List[dict]) -> str:
 
 def setOrder() -> List[Tuple[str, str, str, str, str, str, str, str, str, str, str, str, str, str, str, str]]:
     try:
-        workbook = pd.read_excel("C:/orders/order.xlsx")
+        #workbook = pd.read_excel("C:/orders/order.xlsx")
+        # Open file dialog to select the Excel file
+        Tk().withdraw()  # Hide the Tkinter root window
+        filename = askopenfilename(filetypes=[("Excel Files", "*.xlsx")])
+
+        workbook = pd.read_excel(filename)
         rows = []
         for index, row in workbook.iterrows():
             numeroPedido = str(row.iloc[0])
