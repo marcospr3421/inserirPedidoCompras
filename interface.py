@@ -1,16 +1,22 @@
 import tkinter as tk
-from geraPedidoCompra import handle_soap_request
+from tkinter import filedialog
 
 
-def call_handle_soap_request():
-    handle_soap_request(handle_soap_request.url, handle_soap_request.headers, handle_soap_request.body)
+def open_file():
+    filename = filedialog.askopenfilename(filetypes=[("Excel Files", "*.xlsx")])
+    if not filename:
+        print("No file selected.")
+    else:
+        setOrder(filename)
 
-# Create the GUI window
-window = tk.Tk()
+def setOrder(filename):
+    # Your existing code here
+    pass
 
-# Create a button to call the handle_soap_request function
-button = tk.Button(window, text="Call handle_soap_request", command=call_handle_soap_request)
-button.pack()
+root = tk.Tk()
+root.title("Order Processing")
 
-# Start the GUI event loop
-window.mainloop()
+open_file_button = tk.Button(root, text="Open Excel File", command=open_file)
+open_file_button.pack()
+
+root.mainloop()

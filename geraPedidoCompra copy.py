@@ -7,6 +7,8 @@ from collections import defaultdict
 from tkinter import Tk
 from tkinter.filedialog import askopenfilename
 import xml.etree.ElementTree as ET
+import tkinter as tk
+from tkinter import filedialog
 
 
 def gera_pedido_compra(pedidos: List[dict]) -> str:
@@ -37,34 +39,21 @@ def gera_pedido_compra(pedidos: List[dict]) -> str:
     
 
 def setOrder() -> List[Tuple[str, str, str, str, str, str, str, str, str, str, str, str, str, str, str, str]]:
+    root = tk.Tk()
+    root.withdraw()  # Hide the main window
+    filename = filedialog.askopenfilename(title="Select an Excel file", filetypes=[("Excel Files", "*.xlsx")])
+    if not filename:
+        print("No file selected")
+        return []
+
     try:
-        #workbook = pd.read_excel("C:/orders/order.xlsx")
-        # Open file dialog to select the Excel file
-        Tk().withdraw()  # Hide the Tkinter root window
-        filename = askopenfilename(filetypes=[("Excel Files", "*.xlsx")])
+        
+
 
         workbook = pd.read_excel(filename)
         rows = []
         for index, row in workbook.iterrows():
-            numeroPedido = str(row.iloc[0])
-            cnpjFornecedor = str(row.iloc[1])
-            vendedor = str(row.iloc[2])
-            valorFrete = str(row.iloc[3])
-            valorImpostos = str(row.iloc[4])
-            tipoPedido = str(row.iloc[5])
-            tipoPrazoPagamento = str(row.iloc[6])
-            prazosPagamento = str(row.iloc[7])
-            codigoProduto = str(row.iloc[8])
-            quantidade = str(row.iloc[9])
-            precoBruto = str(row.iloc[10])
-            descontoTotal = str(row.iloc[11])
-            aliquotaICMS = str(row.iloc[12])
-            aliquotaIPI = str(row.iloc[13])
-            previsaoEntrega = str(row.iloc[14])
-            concluirPedido = str(row.iloc[15])
-            
-            
-            rows.append((numeroPedido, cnpjFornecedor, vendedor, valorFrete, valorImpostos, tipoPedido, tipoPrazoPagamento, prazosPagamento, codigoProduto, quantidade, precoBruto, descontoTotal, aliquotaICMS, aliquotaIPI, previsaoEntrega, concluirPedido))
+            rows.append(tuple(str(row.iloc[i]) for i in range(16)))
         return rows
     except Exception as e:
         logging.error("Error reading Excel file: %s", e)
@@ -86,7 +75,6 @@ def handle_soap_request(url: str, headers: dict, body: str) -> List[Tuple[str, s
         response = requests.post(url, data=body, headers=headers)
         response_content = response.content.decode('utf-8')
         response_content = ''.join(char for char in response_content if ord(char) < 255)
-        print(response_content)
 
         xml_io = StringIO(response_content)
         result = []
