@@ -1,3 +1,4 @@
+from fileinput import filename
 import logging
 import requests
 from io import StringIO
@@ -9,6 +10,7 @@ from tkinter.filedialog import askopenfilename
 import xml.etree.ElementTree as ET
 import tkinter as tk
 from tkinter import filedialog
+
 
 
 def gera_pedido_compra(pedidos: List[dict]) -> str:
@@ -38,13 +40,37 @@ def gera_pedido_compra(pedidos: List[dict]) -> str:
     return pedidos_compra
     
 
-def setOrder() -> List[Tuple[str, str, str, str, str, str, str, str, str, str, str, str, str, str, str, str]]:
-    root = tk.Tk()
-    root.withdraw()  # Hide the main window
-    filename = filedialog.askopenfilename(title="Select an Excel file", filetypes=[("Excel Files", "*.xlsx")])
-    if not filename:
-        print("No file selected")
+
+    
+
+def read_excel_file(filename):
+    try:
+        workbook = pd.read_excel(filename)
+        rows = []
+        for index, row in workbook.iterrows():
+            rows.append(tuple(str(row.iloc[i]) for i in range(16)))
+        return rows
+    except Exception as e:
+        logging.error("Error reading Excel file: %s", e)
         return []
+def select_file():
+    global filename
+    filename = filedialog.askopenfilename(title="Select an Excel file", filetypes=[("Excel Files", "*.xlsx")])
+
+window = tk.Tk()
+window.title("File Selector")
+
+filename = ''  # Initialize filename as an empty string
+button1 = tk.Button(window, text="Select Excel File", command=select_file)
+button1.pack(side=tk.LEFT)
+
+button2 = tk.Button(window, text="Import", command=lambda: read_excel_file(filename))
+button2.pack(side=tk.LEFT)
+
+window.mainloop()
+
+
+def setOrder() -> List[Tuple[str, str, str, str, str, str, str, str, str, str, str, str, str, str, str, str]]:
 
     try:
         
@@ -65,6 +91,8 @@ for row in rows:
     grouped_rows[row[0]].append(row)
     
 results = []
+
+
 
 
 
