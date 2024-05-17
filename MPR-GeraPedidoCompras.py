@@ -145,7 +145,7 @@ def main():
     # Create the main window
     root = tk.Tk()
     root.title("MPRLabs - GeraPedidosCompras - v1.0.5.24")
-    root.geometry("700x400")
+    root.geometry("700x500")
     root.resizable(False, False)
     root.configure(background="#ffffff")
     
@@ -156,7 +156,7 @@ def main():
         label.place(x=10, y=10, relwidth=1, relheight=1)
     except Exception as e:
         logging.warning("Failed to load background image: %s", e)
-        print("Failed to load background image:", e)
+        
     
     
     try:
@@ -291,9 +291,13 @@ def start_process(status_label, progress_bar, root):
             progress_bar["value"] = (current_order / total_orders) * 100
             root.update_idletasks()
             current_order += 1
+            
 
     else:
         status_label.config(text="Processamento cancelado.")
+        
+    # Show a message when finished
+    messagebox.showinfo("Concluído", "O processamento foi concluído.")
 
 if __name__ == "__main__":
     main()
