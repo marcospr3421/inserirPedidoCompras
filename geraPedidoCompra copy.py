@@ -1,4 +1,4 @@
-from fileinput import filename
+
 import logging
 import requests
 from io import StringIO
@@ -10,61 +10,82 @@ from tkinter.filedialog import askopenfilename
 import xml.etree.ElementTree as ET
 import tkinter as tk
 from tkinter import filedialog
-
-
+import xml.sax.saxutils as saxutils
 
 def gera_pedido_compra(pedidos: List[dict]) -> str:
-    pedidos_compra = ""
-    
-    for pedido in pedidos:
-
-        pedidos_compra += f"""
+    pedidos_compra = [
+        f"""
         <PedidoCompra>
-            <NumeroPedido>{pedido['numeroPedido']}</NumeroPedido>
-            <CnpjFornecedor>{pedido['cnpjFornecedor']}</CnpjFornecedor>
-            <Vendedor>{pedido['vendedor']}</Vendedor>
-            <ValorFrete>{pedido['valorFrete']}</ValorFrete>
-            <ValorImpostos>{pedido['valorImpostos']}</ValorImpostos>
-            <TipoPedido>{pedido['tipoPedido']}</TipoPedido>
-            <TipoPrazoPagamento>{pedido['tipoPrazoPagamento']}</TipoPrazoPagamento>
-            <PrazosPagamento>{pedido['prazosPagamento']}</PrazosPagamento>
-            <CodigoProduto>{pedido['codigoProduto']}</CodigoProduto>
-            <Quantidade>{pedido['quantidade']}</Quantidade>
-            <PrecoBruto>{pedido['precoBruto']}</PrecoBruto>
-            <DescontoTotal>{pedido['descontoTotal']}</DescontoTotal>
-            <AliquotaICMS>{pedido['aliquotaICMS']}</AliquotaICMS>
-            <AliquotaIPI>{pedido['aliquotaIPI']}</AliquotaIPI>
-            <PrevisaoEntrega>{pedido['previsaoEntrega']}</PrevisaoEntrega>
-            <ConcluirPedido>{pedido['concluirPedido']}</ConcluirPedido>
+            <NumeroPedido>{saxutils.escape(pedido['numeroPedido'])}</NumeroPedido>
+            <CnpjFornecedor>{saxutils.escape(pedido['cnpjFornecedor'])}</CnpjFornecedor>
+            <Vendedor>{saxutils.escape(pedido['vendedor'])}</Vendedor>
+            <ValorFrete>{saxutils.escape(pedido['valorFrete'])}</ValorFrete>
+            <ValorImpostos>{saxutils.escape(pedido['valorImpostos'])}</ValorImpostos>
+            <TipoPedido>{saxutils.escape(pedido['tipoPedido'])}</TipoPedido>
+            <TipoPrazoPagamento>{saxutils.escape(pedido['tipoPrazoPagamento'])}</TipoPrazoPagamento>
+            <PrazosPagamento>{saxutils.escape(pedido['prazosPagamento'])}</PrazosPagamento>
+            <CodigoProduto>{saxutils.escape(pedido['codigoProduto'])}</CodigoProduto>
+            <Quantidade>{saxutils.escape(pedido['quantidade'])}</Quantidade>
+            <PrecoBruto>{saxutils.escape(pedido['precoBruto'])}</PrecoBruto>
+            <DescontoTotal>{saxutils.escape(pedido['descontoTotal'])}</DescontoTotal>
+            <AliquotaICMS>{saxutils.escape(pedido['aliquotaICMS'])}</AliquotaICMS>
+            <AliquotaIPI>{saxutils.escape(pedido['aliquotaIPI'])}</AliquotaIPI>
+            <PrevisaoEntrega>{saxutils.escape(pedido['previsaoEntrega'])}</PrevisaoEntrega>
+            <ConcluirPedido>{saxutils.escape(pedido['concluirPedido'])}</ConcluirPedido>
         </PedidoCompra>"""
-    return pedidos_compra
+        for pedido in pedidos
+    ]
+    return "\n".join(pedidos_compra)
     
 
 
     
 
 def read_excel_file(filename):
+    """
+    Reads an Excel file and returns the data as a list of tuples.
+
+    Args:
+        filename (str): The path to the Excel file.
+
+    Returns:
+        list: The data from the Excel file as a list of tuples.
+    """
     try:
         workbook = pd.read_excel(filename)
+        workbook = workbook.astype(str)
         rows = []
         for index, row in workbook.iterrows():
-            rows.append(tuple(str(row.iloc[i]) for i in range(16)))
+            rows.append(tuple(row))
         return rows
+    except FileNotFoundError as e:
+        logging.error("File not found: %s", e)
+        raise e
+    except IsADirectoryError as e:
+        logging.error("Is a directory: %s", e)
+        raise e
+    except PermissionError as e:
+        logging.error("Permission denied: %s", e)
+        raise e
     except Exception as e:
         logging.error("Error reading Excel file: %s", e)
-        return []
+        raise e
 def select_file():
     global filename
-    filename = filedialog.askopenfilename(title="Select an Excel file", filetypes=[("Excel Files", "*.xlsx")])
+    filename = filedialog.askopenfilename(filetypes=[("Excel files", "*.xlsx;*.xls")])
+    if filename:
+        print(f"File selected: {filename}")
+    else:
+        print("No file selected")
 
 window = tk.Tk()
 window.title("File Selector")
 
 filename = ''  # Initialize filename as an empty string
-button1 = tk.Button(window, text="Select Excel File", command=select_file)
+button1 = tk.Button(window, text="Browse", command=select_file)
 button1.pack(side=tk.LEFT)
 
-button2 = tk.Button(window, text="Import", command=lambda: read_excel_file(filename))
+button2 = tk.Button(window, text="Import", command=lambda: read_excel_file(filename) if filename else print("No file selected"))
 button2.pack(side=tk.LEFT)
 
 window.mainloop()
@@ -83,6 +104,8 @@ def setOrder() -> List[Tuple[str, str, str, str, str, str, str, str, str, str, s
         return rows
     except Exception as e:
         logging.error("Error reading Excel file: %s", e)
+
+        
         return []
 rows = setOrder()
 # Group rows by numeroPedido
@@ -142,6 +165,7 @@ def handle_soap_request(url: str, headers: dict, body: str) -> List[Tuple[str, s
                 
     except requests.exceptions.RequestException as e:
         print(f"An error occurred: {e}")
+        
     
     return []  # Fix: Return an empty list if values contain None
 
@@ -196,6 +220,7 @@ for numeroPedido, grouped_row in grouped_rows.items():
             exceptionMessage = element.findtext(".//{http://www.kplsolucoes.com.br/ABACOSWebService}ExceptionMessage")
             # if codigo == "100001":
             print(codigo, descricao, tipo, exceptionMessage)
+           
             
     for pedido in pedidos:
         
