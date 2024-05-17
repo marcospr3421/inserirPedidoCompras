@@ -1,4 +1,5 @@
 import logging
+from turtle import color
 import requests
 from io import StringIO
 import pandas as pd
@@ -143,35 +144,59 @@ def main():
 
     # Create the main window
     root = tk.Tk()
-    root.title("Inserir Pedidos de Compra")
-    root.geometry("610x150")
+    root.title("MPRLabs - GeraPedidosCompras - v1.0.5.24")
+    root.geometry("700x400")
+    root.resizable(False, False)
+    root.configure(background="#ffffff")
+    
+    try:
+        image_path = "mprLabs4sml.png"  # Replace with the actual path to your image file
+        image = tk.PhotoImage(file=image_path)
+        label = tk.Label(root, image=image)
+        label.place(x=10, y=10, relwidth=1, relheight=1)
+    except Exception as e:
+        logging.warning("Failed to load background image: %s", e)
+        print("Failed to load background image:", e)
+    
+    
+    try:
+        icon_path = "mprIco.ico"  # Replace with the actual path to your icon file
+        root.iconbitmap(icon_path)
+    except Exception as e:
+        logging.warning("Failed to set window icon: %s", e)
 
 
-    # # Create a label for the file selection
-    # file_label = tk.Label(root, text="Selecione o arquivo Excel:")
-    # file_label.pack()
-
-    # # Create a button to select the file
-    # file_button = tk.Button(root, text="Selecionar arquivo", command=lambda: select_file())
-    # file_button.pack()
-
+ 
     # Create a label for the status
     status_label = tk.Label(root, text="")
     status_label.pack()
 
+    # Create a progress bar
+    progress_bar = ttk.Progressbar(root, orient="horizontal", length=200, mode="determinate")
+    progress_bar.pack()
+
     # Create a button to start the process
-    start_button = tk.Button(root, text="Iniciar processamento", command=lambda: start_process(status_label))
+    start_button = tk.Button(root, text="Iniciar processamento", command=lambda: start_process(status_label, progress_bar, root), bg="green", fg="white")
     start_button.pack(side="bottom", padx=10, pady=5)
+
+    
+    
+    # Create a button to exit the program
+    exit_button = tk.Button(root, text="Sair", command=root.destroy, bg="red", fg="white")
+    exit_button.pack(side="bottom")
+
+
 
     # Run the main loop
     root.mainloop()
 
-def start_process(status_label):
+def start_process(status_label, progress_bar, root):
     """
     Starts the process of generating and sending purchase orders.
 
     Args:
         status_label: The label to display status messages.
+        progress_bar: The progress bar to update.
     """
 
     # Select the Excel file
@@ -202,8 +227,13 @@ def start_process(status_label):
             grouped_rows[row[0]].append(row)
 
         # Process each purchase order
+        total_orders = len(grouped_rows)
+        current_order = 1
         for numero_pedido, grouped_row in grouped_rows.items():
+                        
             pedidos = []
+            
+            
             for row in grouped_row:
                 numero_pedido, cnpj_fornecedor, vendedor, valor_frete, valor_impostos, tipo_pedido, tipo_prazo_pagamento, prazos_pagamento, codigo_produto, quantidade, preco_bruto, desconto_total, aliquota_icms, aliquota_ipi, previsao_entrega, concluir_pedido = row
                 pedidos.append({
@@ -224,6 +254,8 @@ def start_process(status_label):
                     'previsaoEntrega': previsao_entrega,
                     'concluirPedido': concluir_pedido
                 })
+          
+
 
             # Generate the XML payload
             body = f"""<?xml version="1.0" encoding="utf-8"?>
@@ -253,6 +285,12 @@ def start_process(status_label):
                     exceptionMessage = element.findtext(".//{http://www.kplsolucoes.com.br/ABACOSWebService}ExceptionMessage")
                     # if codigo == "100001":
                     status_label.config(text=f"Código: {codigo}\nDescrição: {descricao}\nTipo: {tipo}\nMensagem de exceção: {exceptionMessage}")
+            
+
+            # Update the progress bar
+            progress_bar["value"] = (current_order / total_orders) * 100
+            root.update_idletasks()
+            current_order += 1
 
     else:
         status_label.config(text="Processamento cancelado.")
