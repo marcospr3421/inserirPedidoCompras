@@ -41,6 +41,8 @@ def gera_pedido_compra(pedidos: List[dict]) -> str:
             <AliquotaIPI>{saxutils.escape(pedido['aliquotaIPI'])}</AliquotaIPI>
             <PrevisaoEntrega>{saxutils.escape(pedido['previsaoEntrega'])}</PrevisaoEntrega>
             <ConcluirPedido>{saxutils.escape(pedido['concluirPedido'])}</ConcluirPedido>
+            <UnidadeNegocio>{saxutils.escape(pedido['unidadeNegocio'])}</UnidadeNegocio>
+            <NumeroPedidoVenda>{saxutils.escape(pedido['numeroPedidoVenda'])}</NumeroPedidoVenda>
         </PedidoCompra>"""
         for pedido in pedidos
     ]
@@ -61,7 +63,7 @@ def select_file() -> str:
         print("No file selected")
     return filename
 
-def set_order(filename: str) -> List[Tuple[str, str, str, str, str, str, str, str, str, str, str, str, str, str, str, str]]:
+def set_order(filename: str) -> List[Tuple[str, str, str, str, str, str, str, str, str, str, str, str, str, str, str, str, str, str]]:
     """
     Reads the Excel file and returns a list of purchase order data.
 
@@ -76,14 +78,14 @@ def set_order(filename: str) -> List[Tuple[str, str, str, str, str, str, str, st
         workbook = pd.read_excel(filename)
         rows = []
         for index, row in workbook.iterrows():
-            rows.append(tuple(str(row.iloc[i]) for i in range(16)))
+            rows.append(tuple(str(row.iloc[i]) for i in range(18)))
         return rows
     except Exception as e:
         logging.error("Error reading Excel file: %s", e)
         return []
 
 
-def handle_soap_request(url: str, headers: dict, body: str) -> List[Tuple[str, str, str, str, str, str, str, str, str, str, str, str, str, str, str, str]]:
+def handle_soap_request(url: str, headers: dict, body: str) -> List[Tuple[str, str, str, str, str, str, str, str, str, str, str, str, str, str, str, str, str, str]]:
     """
     Sends the SOAP request and returns the parsed response.
 
@@ -125,7 +127,9 @@ def handle_soap_request(url: str, headers: dict, body: str) -> List[Tuple[str, s
                         "AliquotaICMS",
                         "AliquotaIPI",
                         "PrevisaoEntrega",
-                        "ConcluirPedido"
+                        "ConcluirPedido",
+                        "UnidadeNegocio",
+                        "NumeroPedidoVenda"
                     ]
                 )
 
@@ -144,7 +148,7 @@ def main():
 
     # Create the main window
     root = tk.Tk()
-    root.title("MPRLabs - GeraPedidosCompras - v1.0.5.24")
+    root.title("MPRLabs - GeraPedidosCompras - v1.0.2.25")
     root.geometry("700x500")
     root.resizable(False, False)
     root.configure(background="#ffffff")
@@ -235,7 +239,7 @@ def start_process(status_label, progress_bar, root):
             
             
             for row in grouped_row:
-                numero_pedido, cnpj_fornecedor, vendedor, valor_frete, valor_impostos, tipo_pedido, tipo_prazo_pagamento, prazos_pagamento, codigo_produto, quantidade, preco_bruto, desconto_total, aliquota_icms, aliquota_ipi, previsao_entrega, concluir_pedido = row
+                numero_pedido, cnpj_fornecedor, vendedor, valor_frete, valor_impostos, tipo_pedido, tipo_prazo_pagamento, prazos_pagamento, codigo_produto, quantidade, preco_bruto, desconto_total, aliquota_icms, aliquota_ipi, previsao_entrega, concluir_pedido, unidade_negocio, numero_pedido_venda = row
                 pedidos.append({
                     'numeroPedido': numero_pedido,
                     'cnpjFornecedor': cnpj_fornecedor,
@@ -252,7 +256,9 @@ def start_process(status_label, progress_bar, root):
                     'aliquotaICMS': aliquota_icms,
                     'aliquotaIPI': aliquota_ipi,
                     'previsaoEntrega': previsao_entrega,
-                    'concluirPedido': concluir_pedido
+                    'concluirPedido': concluir_pedido,
+                    'unidadeNegocio': unidade_negocio,
+                    'numeroPedidoVenda': numero_pedido_venda
                 })
           
 
@@ -271,7 +277,7 @@ def start_process(status_label, progress_bar, root):
             </soap:Envelope>"""
 
             # Send the SOAP request and handle the response
-            url = "http://ws.kplcloud.onclick.com.br/AbacosWSerp.asmx"
+            url = "http://ws.livekpl.onclick.com.br/AbacosWSerp.asmx"
             headers = {'content-type': 'text/xml'}
             response = requests.post(url=url, headers=headers, data=body)
             response_content = response.content.decode('utf-8')
