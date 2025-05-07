@@ -1,0 +1,39 @@
+=== Pedido de Compra AC-DC25-0999 ===
+Data/Hora: 2025-05-07 10:53:13
+
+=== REQUEST ===
+<?xml version="1.0" encoding="utf-8"?>
+            <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+                <soap:Body>
+                    <InserirPedidoCompra xmlns="http://www.kplsolucoes.com.br/ABACOSWebService">
+                        <ChaveIdentificacao>E19C1DD8-345F-4F1B-A53F-CA4312CAF457</ChaveIdentificacao>
+                        <ListaDePedidosCompra>
+                            
+        <PedidoCompra>
+            <NumeroPedido>AC-DC25-0999</NumeroPedido>
+            <CnpjFornecedor>5056075000108</CnpjFornecedor>
+            <Vendedor>ACRILUX</Vendedor>
+            <ValorFrete>0</ValorFrete>
+            <ValorImpostos>0</ValorImpostos>
+            <TipoPedido>1</TipoPedido>
+            <TipoPrazoPagamento>1</TipoPrazoPagamento>
+            <PrazosPagamento>20</PrazosPagamento>
+            <CodigoProduto>27913</CodigoProduto>
+            <Quantidade>1</Quantidade>
+            <PrecoBruto>56</PrecoBruto>
+            <DescontoTotal>0</DescontoTotal>
+            <AliquotaICMS>0</AliquotaICMS>
+            <AliquotaIPI>0</AliquotaIPI>
+            <PrevisaoEntrega>24042024</PrevisaoEntrega>
+            <ConcluirPedido>N</ConcluirPedido>
+            <UnidadeNegocio>5</UnidadeNegocio>
+            <NumeroPedidoVenda>1234</NumeroPedidoVenda>
+        </PedidoCompra>
+                        </ListaDePedidosCompra>
+                    </InserirPedidoCompra>
+                </soap:Body>
+            </soap:Envelope>
+
+=== RESPONSE ===
+<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema"><soap:Body><InserirPedidoCompraResponse xmlns="http://www.kplsolucoes.com.br/ABACOSWebService"><InserirPedidoCompraResult><ResultadoOperacao><Codigo>100001</Codigo><Descricao>Ocorreram erros durante a obtenção das informações pertinentes a lista de itens. Verifique o retorno em cada item para maiores detalhes.</Descricao><Tipo>tdreAlerta</Tipo><ExceptionMessage>O produto não consta no pedido de venda: 1234
+Falha cadastrando item do pedido</ExceptionMessage></ResultadoOperacao><VersaoWebService>50.106.125.0</VersaoWebService><Rows><PedidosCompraResultado><NumeroPedido>AC-DC25-0999</NumeroPedido><Resultado><Codigo>200002</Codigo><Descricao>OK. - I35249DCD</Descricao><Tipo>tdreSucesso</Tipo></Resultado></PedidosCompraResultado></Rows></InserirPedidoCompraResult></InserirPedidoCompraResponse></soap:Body></soap:Envelope>

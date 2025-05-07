@@ -10,6 +10,8 @@ import xml.etree.ElementTree as ET
 import tkinter as tk
 from tkinter import ttk, messagebox
 import xml.sax.saxutils as saxutils
+import os
+from datetime import datetime
 
 def gera_pedido_compra(pedidos: List[dict]) -> str:
     """
@@ -141,6 +143,36 @@ def handle_soap_request(url: str, headers: dict, body: str) -> List[Tuple[str, s
 
     return result
 
+def save_request_to_file(numero_pedido: str, request_body: str, response_content: str) -> str:
+    """
+    Saves the request and response details to a txt file.
+
+    Args:
+        numero_pedido: The purchase order number
+        request_body: The XML request body
+        response_content: The response content from the server
+
+    Returns:
+        The path to the generated file
+    """
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"pedido_{numero_pedido}_{timestamp}.txt"
+    
+    # Create logs directory if it doesn't exist
+    os.makedirs("logs", exist_ok=True)
+    
+    filepath = os.path.join("logs", filename)
+    
+    with open(filepath, "w", encoding="utf-8") as f:
+        f.write(f"=== Pedido de Compra {numero_pedido} ===\n")
+        f.write(f"Data/Hora: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
+        f.write("=== REQUEST ===\n")
+        f.write(request_body)
+        f.write("\n\n=== RESPONSE ===\n")
+        f.write(response_content)
+    
+    return filepath
+
 def main():
     """
     Main function of the script.
@@ -233,10 +265,12 @@ def start_process(status_label, progress_bar, root):
         # Process each purchase order
         total_orders = len(grouped_rows)
         current_order = 1
+        
+        # Create a list to store all generated file paths
+        generated_files = []
+        
         for numero_pedido, grouped_row in grouped_rows.items():
-                        
             pedidos = []
-            
             
             for row in grouped_row:
                 numero_pedido, cnpj_fornecedor, vendedor, valor_frete, valor_impostos, tipo_pedido, tipo_prazo_pagamento, prazos_pagamento, codigo_produto, quantidade, preco_bruto, desconto_total, aliquota_icms, aliquota_ipi, previsao_entrega, concluir_pedido, unidade_negocio, numero_pedido_venda = row
@@ -260,8 +294,6 @@ def start_process(status_label, progress_bar, root):
                     'unidadeNegocio': unidade_negocio,
                     'numeroPedidoVenda': numero_pedido_venda
                 })
-          
-
 
             # Generate the XML payload
             body = f"""<?xml version="1.0" encoding="utf-8"?>
@@ -281,23 +313,28 @@ def start_process(status_label, progress_bar, root):
             headers = {'content-type': 'text/xml'}
             response = requests.post(url=url, headers=headers, data=body)
             response_content = response.content.decode('utf-8')
+            
+            # Save request and response to file
+            filepath = save_request_to_file(numero_pedido, body, response_content)
+            generated_files.append(filepath)
+            
             xml_io = StringIO(response_content)
             for event, element in ET.iterparse(xml_io, events=("start", "end")):
                 if event == "start" and element.tag == '{http://www.kplsolucoes.com.br/ABACOSWebService}InserirPedidoCompraResult':
-        
                     codigo = element.findtext(".//{http://www.kplsolucoes.com.br/ABACOSWebService}Codigo")
                     descricao = element.findtext(".//{http://www.kplsolucoes.com.br/ABACOSWebService}Descricao")
                     tipo = element.findtext(".//{http://www.kplsolucoes.com.br/ABACOSWebService}Tipo")
                     exceptionMessage = element.findtext(".//{http://www.kplsolucoes.com.br/ABACOSWebService}ExceptionMessage")
-                    # if codigo == "100001":
                     status_label.config(text=f"Código: {codigo}\nDescrição: {descricao}\nTipo: {tipo}\nMensagem de exceção: {exceptionMessage}")
-            
 
             # Update the progress bar
             progress_bar["value"] = (current_order / total_orders) * 100
             root.update_idletasks()
             current_order += 1
-            
+
+        # Show summary of generated files
+        files_message = f"Arquivos gerados na pasta 'logs':\n" + "\n".join(generated_files)
+        messagebox.showinfo("Arquivos Gerados", files_message)
 
     else:
         status_label.config(text="Processamento cancelado.")
