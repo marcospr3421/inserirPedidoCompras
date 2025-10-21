@@ -180,7 +180,7 @@ def main():
 
     # Create the main window
     root = tk.Tk()
-    root.title("MPRLabs - GeraPedidosCompras - v1.0.2.25")
+    root.title("MPRLabs - GeraPedidosCompras - v1.0.10.25")
     root.geometry("700x500")
     root.resizable(False, False)
     root.configure(background="#ffffff")
@@ -309,7 +309,7 @@ def start_process(status_label, progress_bar, root):
             </soap:Envelope>"""
 
             # Send the SOAP request and handle the response
-            url = "http://ws.livekpl.onclick.com.br/AbacosWSerp.asmx"
+            url = "http://ws.ocikpl.onclick.com.br/AbacosWSerp.asmx"
             headers = {'content-type': 'text/xml'}
             response = requests.post(url=url, headers=headers, data=body)
             response_content = response.content.decode('utf-8')
