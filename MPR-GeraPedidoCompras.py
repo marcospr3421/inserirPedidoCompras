@@ -13,6 +13,22 @@ import xml.sax.saxutils as saxutils
 import os
 from datetime import datetime
 
+def format_date_ddmmyyyy(value) -> str:
+    """
+    Normalize various date-like inputs to 'ddmmyyyy' (e.g., 01112025).
+
+    Attempts to parse using pandas when possible; falls back to zero-padding
+    numeric/compact string values to 8 characters.
+    """
+    try:
+        # Try robust parsing first (handles datetime, Timestamp, strings like '01/11/2025')
+        dt = pd.to_datetime(value, dayfirst=True, errors='raise')
+        return dt.strftime('%d%m%Y')
+    except Exception:
+        # Fallback: keep only digits and left-pad to 8
+        digits_only = ''.join(ch for ch in str(value).strip() if ch.isdigit())
+        return digits_only.zfill(8)
+
 def gera_pedido_compra(pedidos: List[dict]) -> str:
     """
     Generates an XML payload containing the purchase order data.
@@ -100,13 +116,13 @@ def handle_soap_request(url: str, headers: dict, body: str) -> List[Tuple[str, s
         A list of tuples, each representing a purchase order response.
     """
 
+    result = []
     try:
         response = requests.post(url, data=body, headers=headers)
         response_content = response.content.decode('utf-8')
         response_content = ''.join(char for char in response_content if ord(char) < 255)
 
         xml_io = StringIO(response_content)
-        result = []
         values = []
 
         for event, element in ET.iterparse(xml_io, events=("start", "end")):
@@ -274,6 +290,8 @@ def start_process(status_label, progress_bar, root):
             
             for row in grouped_row:
                 numero_pedido, cnpj_fornecedor, vendedor, valor_frete, valor_impostos, tipo_pedido, tipo_prazo_pagamento, prazos_pagamento, codigo_produto, quantidade, preco_bruto, desconto_total, aliquota_icms, aliquota_ipi, previsao_entrega, concluir_pedido, unidade_negocio, numero_pedido_venda = row
+                # Normalize date to ddmmyyyy with leading zeros (e.g., 01112025)
+                previsao_entrega = format_date_ddmmyyyy(previsao_entrega)
                 pedidos.append({
                     'numeroPedido': numero_pedido,
                     'cnpjFornecedor': cnpj_fornecedor,

@@ -5,7 +5,7 @@ a = Analysis(
     ['MPR-GeraPedidoCompras.py'],
     pathex=[],
     binaries=[],
-    datas=[],
+    datas=[('mprLabs4sml.png', '.'), ('MprIco.ico', '.')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
@@ -35,5 +35,5 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=['mprIco.ico'],
+    icon=['MprIco.ico'],
 )
